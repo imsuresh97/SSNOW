@@ -1,0 +1,219 @@
+package com.jcg.example;
+ 
+public class Student {
+ 
+    private String name;
+    private String maths;
+    private String science;
+    private String english;
+ 
+    public Student(){}
+ 
+    public Student(String name, String maths, String science, String english) {
+        this.name = name;
+        this.maths = maths;
+        this.science = science;
+        this.english = english;
+    }
+ 
+   //getters and setter..
+ 
+    @Override
+    public String toString() {
+        return name+ ": Maths "+maths+ " Science "+science+" English "+english;
+    }
+}
+
+
+package com.jcg.example;
+ 
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+ 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+ 
+/**
+ * Created by anirudh on 20/10/14.
+ */
+public class ReadExcelFileExample {
+ 
+    private static final String FILE_PATH = "/Users/anirudh/Projects/JCGExamples/JavaWriteReadExcelFileExample/testReadStudents.xlsx";
+ 
+    public static void main(String args[]) {
+ 
+        List studentList = getStudentsListFromExcel();
+ 
+        System.out.println(studentList);
+    }
+ 
+    private static List getStudentsListFromExcel() {
+        List studentList = new ArrayList();
+        FileInputStream fis = null;
+        try {
+            fis = new FileInputStream(FILE_PATH);
+ 
+            // Using XSSF for xlsx format, for xls use HSSF
+            Workbook workbook = new XSSFWorkbook(fis);
+ 
+            int numberOfSheets = workbook.getNumberOfSheets();
+ 
+            //looping over each workbook sheet
+            for (int i = 0; i < numberOfSheets; i++) {
+                Sheet sheet = workbook.getSheetAt(i);
+                Iterator rowIterator = sheet.iterator();
+ 
+                //iterating over each row
+                while (rowIterator.hasNext()) {
+ 
+                    Student student = new Student();
+                    Row row = rowIterator.next();
+                    Iterator cellIterator = row.cellIterator();
+ 
+                    //Iterating over each cell (column wise)  in a particular row.
+                    while (cellIterator.hasNext()) {
+ 
+                        Cell cell = cellIterator.next();
+                        //The Cell Containing String will is name.
+                        if (Cell.CELL_TYPE_STRING == cell.getCellType()) {
+                            student.setName(cell.getStringCellValue());
+ 
+                            //The Cell Containing numeric value will contain marks
+                        } else if (Cell.CELL_TYPE_NUMERIC == cell.getCellType()) {
+ 
+                            //Cell with index 1 contains marks in Maths
+                            if (cell.getColumnIndex() == 1) {
+                                student.setMaths(String.valueOf(cell.getNumericCellValue()));
+                            }
+                            //Cell with index 2 contains marks in Science
+                            else if (cell.getColumnIndex() == 2) {
+                                student.setScience(String.valueOf(cell.getNumericCellValue()));
+                            }
+                            //Cell with index 3 contains marks in English
+                            else if (cell.getColumnIndex() == 3) {
+                                student.setEnglish(String.valueOf(cell.getNumericCellValue()));
+                            }
+                        }
+                    }
+                    //end iterating a row, add all the elements of a row in list
+                    studentList.add(student);
+                }
+            }
+ 
+            fis.close();
+ 
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return studentList;
+    }
+ 
+ 
+}
+
+
+
+
+
+
+
+2. Write Excel File In Java
+
+Now, lets see how to write an excel file in Java, we will use the same Student Class for this.
+
+WriteExcelFileExample.java
+	
+package com.jcg.example;
+ 
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+ 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+ 
+/**
+ * Created by anirudh on 23/10/14.
+ */
+public class WriteExcelFileExample {
+    private static final String FILE_PATH = "/Users/anirudh/Projects/JCGExamples/JavaWriteReadExcelFileExample/testWriteStudents.xlsx";
+    //We are making use of a single instance to prevent multiple write access to same file.
+    private static final WriteExcelFileExample INSTANCE = new WriteExcelFileExample();
+ 
+    public static WriteExcelFileExample getInstance() {
+        return INSTANCE;
+    }
+ 
+    private WriteExcelFileExample() {
+    }
+ 
+    public static void main(String args[]){
+ 
+        List studentList = new ArrayList();
+        studentList.add(new Student("Magneto","90","100","80"));
+        studentList.add(new Student("Wolverine","60","60","90"));
+        studentList.add(new Student("ProfX","100","100","100"));
+ 
+        writeStudentsListToExcel(studentList);
+ 
+    }
+ 
+    public static void writeStudentsListToExcel(List studentList){
+ 
+        // Using XSSF for xlsx format, for xls use HSSF
+        Workbook workbook = new XSSFWorkbook();
+ 
+        Sheet studentsSheet = workbook.createSheet("Students");
+ 
+        int rowIndex = 0;
+        for(Student student : studentList){
+            Row row = studentsSheet.createRow(rowIndex++);
+            int cellIndex = 0;
+            //first place in row is name
+            row.createCell(cellIndex++).setCellValue(student.getName());
+ 
+            //second place in row is marks in maths
+            row.createCell(cellIndex++).setCellValue(student.getMaths());
+ 
+            //third place in row is marks in Science
+            row.createCell(cellIndex++).setCellValue(student.getScience());
+ 
+            //fourth place in row is marks in English
+            row.createCell(cellIndex++).setCellValue(student.getEnglish());
+ 
+        }
+ 
+        //write this workbook in excel file.
+        try {
+            FileOutputStream fos = new FileOutputStream(FILE_PATH);
+            workbook.write(fos);
+            fos.close();
+ 
+            System.out.println(FILE_PATH + " is successfully written");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+ 
+ 
+    }
+}
+
+
+
+
+

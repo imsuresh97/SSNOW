@@ -1,0 +1,1 @@
+start javaw -jar mavenproject1-1.0-SNAPSHOT.jar
